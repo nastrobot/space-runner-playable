@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Cyber Runner 2088 — Playable Mobile Demo</title>
+  <title>Cyber Runner 2088 — Arcade Mobile Edition</title>
   <style>
     * {
       box-sizing: border-box;
@@ -17,8 +17,8 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #060814;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #030712;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -27,48 +27,118 @@
       position: relative;
       width: 100%;
       height: 100%;
-      max-width: 480px;
-      max-height: 900px;
-      background: #090c1f;
+      max-width: 460px;
+      max-height: 920px;
+      background: radial-gradient(circle at 50% 30%, #0c142e 0%, #050814 100%);
       overflow: hidden;
-      box-shadow: 0 0 40px rgba(0, 240, 255, 0.25);
+      box-shadow: 0 0 50px rgba(14, 165, 233, 0.2), 0 20px 40px rgba(0, 0, 0, 0.8);
+      border-radius: 12px;
     }
     canvas {
       width: 100%;
       height: 100%;
       display: block;
     }
+
+    /* Modern Arcade Glass HUD */
     .hud {
       position: absolute;
-      top: 16px;
-      left: 16px;
-      right: 16px;
+      top: 14px;
+      left: 14px;
+      right: 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       pointer-events: none;
       z-index: 10;
     }
-    .badge {
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(0, 240, 255, 0.4);
+    .hud-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       padding: 6px 14px;
-      border-radius: 999px;
-      color: #fff;
-      font-size: 14px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .hud-label {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+    .hud-val {
+      font-size: 15px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      color: #38bdf8;
+      text-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+    }
+    .hud-timer {
+      color: #f43f5e;
+      text-shadow: 0 0 12px rgba(244, 63, 94, 0.6);
+    }
+    .shield-pips {
+      display: flex;
+      gap: 4px;
+    }
+    .shield-pip {
+      width: 14px;
+      height: 6px;
+      border-radius: 2px;
+      background: #06b6d4;
+      box-shadow: 0 0 8px rgba(6, 182, 212, 0.8);
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .shield-pip.lost {
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: none;
+    }
+
+    /* Speed Meter Bar */
+    .speed-tag {
+      position: absolute;
+      bottom: 12px;
+      left: 14px;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.5px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      color: #64748b;
+      letter-spacing: 0.8px;
+      pointer-events: none;
+      z-index: 10;
     }
-    .score-badge {
-      color: #00f0ff;
-      text-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
+    .speed-tag span {
+      color: #38bdf8;
+      font-weight: 900;
     }
-    .timer-badge {
-      color: #ff0077;
-      text-shadow: 0 0 10px rgba(255, 0, 119, 0.8);
+
+    /* Controls Hint */
+    .controls-hint {
+      position: absolute;
+      bottom: 12px;
+      right: 14px;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #94a3b8;
+      pointer-events: none;
+      z-index: 10;
     }
+
+    /* Overlays */
     .overlay {
       position: absolute;
       inset: 0;
@@ -76,9 +146,10 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      background: rgba(6, 8, 20, 0.9);
-      backdrop-filter: blur(10px);
-      padding: 24px;
+      background: rgba(3, 7, 18, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 28px;
       text-align: center;
       z-index: 20;
       transition: opacity 0.3s ease;
@@ -86,59 +157,76 @@
     .hidden {
       display: none !important;
     }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      padding: 4px 12px;
+      border-radius: 999px;
+      color: #38bdf8;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
     .title {
-      font-size: 32px;
+      font-size: 34px;
       font-weight: 900;
       color: #fff;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-      background: linear-gradient(135deg, #00f0ff, #ff0077);
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #ffffff 30%, #38bdf8 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
     .subtitle {
       color: #94a3b8;
-      font-size: 15px;
+      font-size: 14px;
       margin-bottom: 24px;
-      line-height: 1.4;
+      line-height: 1.5;
+      max-width: 320px;
     }
-    .btn {
-      background: linear-gradient(135deg, #00f0ff, #ff0077);
-      color: #fff;
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+      color: #ffffff;
       border: none;
-      padding: 16px 36px;
-      border-radius: 999px;
-      font-size: 18px;
+      padding: 16px 38px;
+      border-radius: 14px;
+      font-size: 16px;
       font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
       cursor: pointer;
-      box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
-      transform: scale(1);
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 0 30px rgba(37, 99, 235, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
       touch-action: manipulation;
     }
-    .btn:active {
-      transform: scale(0.95);
-      box-shadow: 0 0 15px rgba(255, 0, 119, 0.8);
+    .btn-primary:active {
+      transform: scale(0.96);
+      box-shadow: 0 0 15px rgba(37, 99, 235, 0.8);
     }
-    .instructions {
-      position: absolute;
-      bottom: 30px;
-      left: 0;
-      right: 0;
-      text-align: center;
-      color: rgba(255, 255, 255, 0.6);
-      font-size: 13px;
+    .key-guide {
+      margin-top: 24px;
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      align-items: center;
+      font-size: 11px;
+      color: #64748b;
       font-weight: 600;
-      letter-spacing: 0.5px;
-      pointer-events: none;
-      animation: pulse 1.5s infinite;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 0.4; transform: translateY(0); }
-      50% { opacity: 1; transform: translateY(-3px); }
+    .key-badge {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 2px 7px;
+      border-radius: 5px;
+      color: #cbd5e1;
+      font-weight: 700;
+      font-family: monospace;
     }
   </style>
 </head>
@@ -146,26 +234,50 @@
   <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
 
+    <!-- Cockpit HUD -->
     <div class="hud" id="hud">
-      <div class="badge score-badge">SCORE: <span id="scoreText">0</span></div>
-      <div class="badge timer-badge"><span id="timerText">30s</span></div>
+      <div class="hud-card">
+        <span class="hud-label">SHIELD</span>
+        <div class="shield-pips" id="shieldPips">
+          <div class="shield-pip" id="pip1"></div>
+          <div class="shield-pip" id="pip2"></div>
+          <div class="shield-pip" id="pip3"></div>
+        </div>
+      </div>
+      <div class="hud-card">
+        <span class="hud-label">SCORE</span>
+        <span class="hud-val" id="scoreText">0</span>
+      </div>
+      <div class="hud-card">
+        <span class="hud-label">WARP</span>
+        <span class="hud-val hud-timer" id="timerText">30s</span>
+      </div>
     </div>
+
+    <div class="speed-tag" id="speedTag">VELOCITY: <span id="speedVal">1,200</span> KM/H</div>
+    <div class="controls-hint">⌨️ WASD / 🕹️ TOUCH & DRAG</div>
 
     <!-- Start Overlay -->
     <div class="overlay" id="startOverlay">
-      <h1 class="title">CYBER RUNNER</h1>
-      <p class="subtitle">Swipe or drag left/right to dodge hazards, collect energy cores, and hit the hyperspace warp!</p>
-      <button class="btn" id="startBtn">PLAY NOW</button>
-      <div class="instructions">👈 SWIPE / DRAG TO STEER 👉</div>
+      <div class="hero-badge">⚡ ARCADE CANVASCRAFT</div>
+      <h1 class="title">CYBER RUNNER<br/>2088</h1>
+      <p class="subtitle">Pilot the high-speed starfighter. Dodge dread mines & laser gates, collect plasma cores, and hit warp speed!</p>
+      <button class="btn-primary" id="startBtn">LAUNCH ENGINE</button>
+      <div class="key-guide">
+        <span><span class="key-badge">W</span> <span class="key-badge">A</span> <span class="key-badge">S</span> <span class="key-badge">D</span> / Arrows to Fly</span>
+        <span>•</span>
+        <span>Touch & Drag on Mobile</span>
+      </div>
     </div>
 
     <!-- End Game / CTA Overlay -->
     <div class="overlay hidden" id="endOverlay">
-      <h1 class="title" id="endTitle">STAGE CLEARED!</h1>
-      <p class="subtitle" id="endSubtitle">You survived the cyber run with a score of <strong id="finalScore" style="color:#00f0ff;">0</strong>!</p>
-      <button class="btn" id="ctaBtn" onclick="alert('BingePlay Demo CTA Triggered! In production, this directs the user straight to App Store / Google Play.')">DOWNLOAD FULL GAME</button>
-      <div style="margin-top: 18px;">
-        <button id="replayBtn" style="background:transparent; border:1px solid #64748b; color:#cbd5e1; padding:8px 18px; border-radius:999px; font-size:13px; cursor:pointer;">TRY AGAIN</button>
+      <div class="hero-badge" id="endBadge">MISSION REPORT</div>
+      <h1 class="title" id="endTitle">HYPERSPACE CLEARED</h1>
+      <p class="subtitle" id="endSubtitle">Your flight recorded a score of <strong id="finalScore" style="color:#38bdf8;">0</strong> with optimal hull integrity.</p>
+      <button class="btn-primary" id="ctaBtn" onclick="alert('Stage complete! Built with Pure HTML5 Canvas 2D & Web Audio API by Nasrullah Gullac.')">PLAY NEXT SECTOR</button>
+      <div style="margin-top: 16px;">
+        <button id="replayBtn" style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; padding:8px 22px; border-radius:999px; font-size:12px; font-weight:700; cursor:pointer;">RETRY MISSION</button>
       </div>
     </div>
   </div>
@@ -175,12 +287,15 @@
     const ctx = canvas.getContext('2d');
     const scoreText = document.getElementById('scoreText');
     const timerText = document.getElementById('timerText');
+    const speedVal = document.getElementById('speedVal');
     const startOverlay = document.getElementById('startOverlay');
     const endOverlay = document.getElementById('endOverlay');
     const startBtn = document.getElementById('startBtn');
     const replayBtn = document.getElementById('replayBtn');
     const finalScore = document.getElementById('finalScore');
     const endTitle = document.getElementById('endTitle');
+    const endBadge = document.getElementById('endBadge');
+    const pips = [document.getElementById('pip1'), document.getElementById('pip2'), document.getElementById('pip3')];
 
     let W = 360;
     let H = 640;
@@ -195,15 +310,20 @@
     window.addEventListener('resize', resize);
     resize();
 
-    // Audio SFX using Web Audio API (Zero external assets, instant 60 FPS)
+    // Web Audio Synthesizer (Zero asset loading, 100% synthesized sound design)
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let actx = null;
 
     function initAudio() {
-      if (!actx) actx = new AudioContext();
+      if (!actx) {
+        actx = new AudioContext();
+      }
+      if (actx.state === 'suspended') {
+        actx.resume();
+      }
     }
 
-    function playTone(freq, type, duration, slideFreq = null) {
+    function playTone(freq, type, duration, slideFreq = null, vol = 0.25) {
       if (!actx) return;
       try {
         const osc = actx.createOscillator();
@@ -211,10 +331,10 @@
         osc.type = type;
         osc.frequency.setValueAtTime(freq, actx.currentTime);
         if (slideFreq) {
-          osc.frequency.exponentialRampToValueAtTime(slideFreq, actx.currentTime + duration);
+          osc.frequency.exponentialRampToValueAtTime(Math.max(20, slideFreq), actx.currentTime + duration);
         }
-        gain.gain.setValueAtTime(0.2, actx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + duration);
+        gain.gain.setValueAtTime(vol, actx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + duration);
         osc.connect(gain);
         gain.connect(actx.destination);
         osc.start();
@@ -223,91 +343,146 @@
     }
 
     function soundCollect() {
-      playTone(520, 'sine', 0.12, 1040);
+      playTone(600, 'sine', 0.09, 1200, 0.2);
+      setTimeout(() => playTone(900, 'sine', 0.12, 1800, 0.18), 50);
+    }
+    function soundShield() {
+      playTone(300, 'triangle', 0.25, 750, 0.3);
     }
     function soundCrash() {
-      playTone(180, 'sawtooth', 0.25, 40);
+      playTone(160, 'sawtooth', 0.3, 30, 0.35);
+    }
+    function soundThrust() {
+      playTone(80, 'sawtooth', 0.08, 140, 0.08);
     }
     function soundWin() {
-      playTone(440, 'triangle', 0.15);
-      setTimeout(() => playTone(660, 'triangle', 0.15), 100);
-      setTimeout(() => playTone(880, 'sine', 0.3), 200);
+      playTone(440, 'triangle', 0.18, 550, 0.25);
+      setTimeout(() => playTone(550, 'triangle', 0.2, 700, 0.25), 120);
+      setTimeout(() => playTone(880, 'sine', 0.4, 1100, 0.3), 260);
     }
 
-    // Game State
-    let gameState = 'START'; // START, PLAYING, END
-    let score = 0;
-    let timeLeft = 30;
-    let timerInterval = null;
-    let speed = 7;
-    let shake = 0;
-
-    // Player
-    const player = {
-      x: W / 2,
-      y: H - 110,
-      size: 26,
-      targetX: W / 2,
-      trail: []
+    // Input Controller: Keyboard (4 directions) & Touch/Pointer
+    const keys = {
+      up: false,
+      down: false,
+      left: false,
+      right: false
     };
 
-    // Entities & Particles
-    let obstacles = [];
-    let coins = [];
-    let particles = [];
-    let stars = [];
+    window.addEventListener('keydown', (e) => {
+      initAudio();
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { keys.up = true; e.preventDefault(); }
+      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') { keys.down = true; e.preventDefault(); }
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { keys.left = true; e.preventDefault(); }
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { keys.right = true; e.preventDefault(); }
+    });
 
-    // Background Stars
-    for (let i = 0; i < 60; i++) {
-      stars.push({
-        x: Math.random() * W,
-        y: Math.random() * H,
-        speed: 1 + Math.random() * 3,
-        size: 1 + Math.random() * 2,
-        alpha: 0.3 + Math.random() * 0.7
-      });
-    }
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') keys.up = false;
+      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.down = false;
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+    });
 
-    // Touch & Pointer Controls (Instant Response)
+    // Touch & Pointer Dragging
     let isDragging = false;
+    let dragTargetX = null;
+    let dragTargetY = null;
 
-    function handlePointerMove(e) {
+    function handlePointer(e) {
       if (gameState !== 'PLAYING') return;
       const rect = canvas.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const x = clientX - rect.left;
-      player.targetX = Math.max(player.size, Math.min(W - player.size, x));
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      dragTargetX = clientX - rect.left;
+      dragTargetY = clientY - rect.top;
     }
 
     window.addEventListener('pointerdown', (e) => {
+      initAudio();
       isDragging = true;
-      handlePointerMove(e);
+      handlePointer(e);
     });
     window.addEventListener('pointermove', (e) => {
-      if (isDragging) handlePointerMove(e);
+      if (isDragging) handlePointer(e);
     });
-    window.addEventListener('pointerup', () => { isDragging = false; });
-    window.addEventListener('touchmove', handlePointerMove, { passive: false });
-
-    // Keyboard support for desktop recruiters
-    window.addEventListener('keydown', (e) => {
-      if (gameState !== 'PLAYING') return;
-      if (e.key === 'ArrowLeft' || e.key === 'a') player.targetX = Math.max(player.size, player.targetX - 45);
-      if (e.key === 'ArrowRight' || e.key === 'd') player.targetX = Math.min(W - player.size, player.targetX + 45);
+    window.addEventListener('pointerup', () => {
+      isDragging = false;
+      dragTargetX = null;
+      dragTargetY = null;
     });
+    window.addEventListener('touchmove', (e) => {
+      if (isDragging) handlePointer(e);
+    }, { passive: false });
 
-    function spawnParticle(x, y, color, count = 8) {
+    // Game Variables
+    let gameState = 'START';
+    let score = 0;
+    let shields = 3;
+    let timeLeft = 30;
+    let timerInterval = null;
+    let baseSpeed = 8;
+    let currentSpeed = 8;
+    let shake = 0;
+    let frame = 0;
+
+    // Player Starfighter Object (Smooth physics, 4-axis movement, banking tilt)
+    const player = {
+      x: W / 2,
+      y: H - 120,
+      vx: 0,
+      vy: 0,
+      speed: 10,
+      tilt: 0,
+      width: 36,
+      height: 48,
+      shieldActive: false,
+      flameFlicker: 0,
+      trail: []
+    };
+
+    // World Entities
+    let obstacles = [];
+    let pickups = [];
+    let particles = [];
+    let floatingTexts = [];
+    let starLayers = [[], [], []];
+
+    // Multi-layer Starfield for true depth
+    function initStars() {
+      starLayers = [[], [], []];
+      for (let i = 0; i < 40; i++) starLayers[0].push({ x: Math.random() * W, y: Math.random() * H, size: 1, speed: 0.6, alpha: 0.4 });
+      for (let i = 0; i < 30; i++) starLayers[1].push({ x: Math.random() * W, y: Math.random() * H, size: 1.6, speed: 1.4, alpha: 0.7 });
+      for (let i = 0; i < 15; i++) starLayers[2].push({ x: Math.random() * W, y: Math.random() * H, size: 2.4, speed: 2.8, alpha: 0.95 });
+    }
+    initStars();
+
+    function updateShieldUI() {
+      pips.forEach((pip, idx) => {
+        if (idx < shields) {
+          pip.classList.remove('lost');
+        } else {
+          pip.classList.add('lost');
+        }
+      });
+    }
+
+    function addFloatingText(x, y, text, color) {
+      floatingTexts.push({ x, y, text, color, alpha: 1.0, dy: -1.8 });
+    }
+
+    function spawnExplosion(x, y, color = '#38bdf8', count = 16) {
       for (let i = 0; i < count; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const v = 2 + Math.random() * 5;
+        const ang = Math.random() * Math.PI * 2;
+        const v = 2 + Math.random() * 6;
         particles.push({
           x, y,
-          vx: Math.cos(angle) * v,
-          vy: Math.sin(angle) * v,
+          vx: Math.cos(ang) * v,
+          vy: Math.sin(ang) * v,
           size: 2 + Math.random() * 3,
           color,
           alpha: 1,
-          decay: 0.02 + Math.random() * 0.03
+          decay: 0.025 + Math.random() * 0.025
         });
       }
     }
@@ -316,16 +491,26 @@
       initAudio();
       gameState = 'PLAYING';
       score = 0;
+      shields = 3;
       timeLeft = 30;
-      speed = 7;
+      baseSpeed = 8;
+      currentSpeed = 8;
       obstacles = [];
-      coins = [];
+      pickups = [];
       particles = [];
+      floatingTexts = [];
+      
       player.x = W / 2;
-      player.targetX = W / 2;
+      player.y = H - 120;
+      player.vx = 0;
+      player.vy = 0;
+      player.tilt = 0;
       player.trail = [];
+
+      updateShieldUI();
       scoreText.innerText = '0';
       timerText.innerText = '30s';
+      speedVal.innerText = '1,200';
 
       startOverlay.classList.add('hidden');
       endOverlay.classList.add('hidden');
@@ -347,13 +532,15 @@
 
       if (victory) {
         soundWin();
-        endTitle.innerText = "CYBER WARP UNLOCKED! 🚀";
-        endTitle.style.background = "linear-gradient(135deg, #00f0ff, #38ef7d)";
-        endTitle.style.webkitBackgroundClip = "text";
+        endBadge.innerText = '🏆 SECTOR 2088 CONQUERED';
+        endTitle.innerText = 'WARP SPEED CLEARED!';
+        endTitle.style.background = 'linear-gradient(135deg, #38bdf8, #34d399)';
+        endTitle.style.webkitBackgroundClip = 'text';
       } else {
-        endTitle.innerText = "CORE SHIELD DEPLETED!";
-        endTitle.style.background = "linear-gradient(135deg, #ff0077, #ffbd59)";
-        endTitle.style.webkitBackgroundClip = "text";
+        endBadge.innerText = '⚠️ HULL CRITICAL';
+        endTitle.innerText = 'DEFENSE BREACHED!';
+        endTitle.style.background = 'linear-gradient(135deg, #f43f5e, #fb923c)';
+        endTitle.style.webkitBackgroundClip = 'text';
       }
 
       finalScore.innerText = score;
@@ -363,42 +550,110 @@
     startBtn.addEventListener('click', startGame);
     replayBtn.addEventListener('click', startGame);
 
-    let spawnTimer = 0;
+    let spawnCounter = 0;
 
+    // Game Update Loop
     function update() {
-      // Background Stars
-      for (let s of stars) {
-        s.y += s.speed * (speed / 4);
-        if (s.y > H) {
-          s.y = 0;
-          s.x = Math.random() * W;
+      frame++;
+
+      // Starfield parallax
+      const warpFactor = currentSpeed / 8;
+      starLayers.forEach(layer => {
+        for (let s of layer) {
+          s.y += s.speed * warpFactor * 2.5;
+          if (s.y > H) {
+            s.y = 0;
+            s.x = Math.random() * W;
+          }
         }
-      }
+      });
 
       if (gameState !== 'PLAYING') return;
 
-      // Player smooth lerp movement
-      player.x += (player.targetX - player.x) * 0.22;
-      player.trail.unshift({ x: player.x, y: player.y + 16, alpha: 0.9 });
-      if (player.trail.length > 8) player.trail.pop();
+      // 4-Way Smooth Responsive Keyboard Controls
+      let moveX = 0;
+      let moveY = 0;
 
-      // Spawn Obstacles and Energy Cores
-      spawnTimer++;
-      if (spawnTimer % 22 === 0) {
-        const laneX = 40 + Math.random() * (W - 80);
-        if (Math.random() < 0.45) {
-          // Obstacle (Laser Hazard)
+      if (keys.left) moveX -= 1;
+      if (keys.right) moveX += 1;
+      if (keys.up) moveY -= 1;
+      if (keys.down) moveY += 1;
+
+      // Mobile Touch Drag
+      if (isDragging && dragTargetX !== null && dragTargetY !== null) {
+        const dx = dragTargetX - player.x;
+        const dy = dragTargetY - player.y;
+        moveX = Math.max(-1, Math.min(1, dx / 25));
+        moveY = Math.max(-1, Math.min(1, dy / 25));
+      }
+
+      // Physics acceleration & friction
+      const accel = 1.6;
+      const friction = 0.84;
+      const maxSpd = 9.5;
+
+      player.vx += moveX * accel;
+      player.vy += moveY * accel;
+
+      player.vx *= friction;
+      player.vy *= friction;
+
+      // Clamp velocities
+      player.vx = Math.max(-maxSpd, Math.min(maxSpd, player.vx));
+      player.vy = Math.max(-maxSpd, Math.min(maxSpd, player.vy));
+
+      player.x += player.vx;
+      player.y += player.vy;
+
+      // Clamp boundaries
+      player.x = Math.max(26, Math.min(W - 26, player.x));
+      player.y = Math.max(60, Math.min(H - 50, player.y));
+
+      // Aerodynamic tilt/banking angle on X movement
+      player.tilt = (player.vx / maxSpd) * 0.38;
+
+      // Dynamic Speed calculation (Speed increases when pressing Up/W)
+      let targetSpeed = 8;
+      if (keys.up || moveY < -0.3) targetSpeed = 13.5;
+      else if (keys.down || moveY > 0.3) targetSpeed = 5.0;
+      currentSpeed += (targetSpeed - currentSpeed) * 0.1;
+      speedVal.innerText = Math.round(currentSpeed * 150).toLocaleString();
+
+      // Exhaust particles
+      player.flameFlicker = Math.sin(frame * 0.8) * 4;
+      if (frame % 2 === 0) {
+        player.trail.unshift({
+          x: player.x,
+          y: player.y + player.height / 2,
+          alpha: 0.8,
+          w: 8 + Math.abs(player.vy)
+        });
+        if (player.trail.length > 8) player.trail.pop();
+      }
+
+      // Spawn Obstacles & Pickups
+      spawnCounter++;
+      if (spawnCounter % 24 === 0) {
+        const spawnX = 35 + Math.random() * (W - 70);
+        const roll = Math.random();
+
+        if (roll < 0.55) {
+          // Obstacle Type: Dread Mine or Laser Pylon
+          const isMine = Math.random() < 0.6;
           obstacles.push({
-            x: laneX,
-            y: -30,
-            w: 48,
-            h: 22,
-            rot: 0
+            type: isMine ? 'mine' : 'barrier',
+            x: spawnX,
+            y: -40,
+            size: isMine ? 20 : 36,
+            rot: 0,
+            pulse: 0
           });
         } else {
-          // Collectible Core
-          coins.push({
-            x: laneX,
+          // Pickup: Plasma Core or Shield Cell
+          const isShield = roll > 0.90 && shields < 3;
+          pickups.push({
+            type: isShield ? 'shield' : 'plasma',
+            x: spawnX,
             y: -30,
             radius: 14,
             pulse: 0
@@ -406,47 +661,72 @@
         }
       }
 
-      // Move & Collide Obstacles
+      // Update Obstacles
       for (let i = obstacles.length - 1; i >= 0; i--) {
         const ob = obstacles[i];
-        ob.y += speed;
-        ob.rot += 0.05;
+        ob.y += currentSpeed;
+        ob.rot += 0.04;
+        ob.pulse += 0.08;
 
-        // Collision with player
+        // Collision Check with player
         const dist = Math.hypot(ob.x - player.x, ob.y - player.y);
-        if (dist < player.size + ob.w / 2.5) {
+        if (dist < player.width / 2 + ob.size) {
           soundCrash();
-          shake = 16;
-          spawnParticle(player.x, player.y, '#ff0077', 20);
-          score = Math.max(0, score - 50);
-          scoreText.innerText = score;
+          shake = 18;
+          spawnExplosion(ob.x, ob.y, '#f43f5e', 24);
+          shields--;
+          updateShieldUI();
+
+          addFloatingText(player.x, player.y - 20, '-1 SHIELD', '#f43f5e');
           obstacles.splice(i, 1);
+
+          if (shields <= 0) {
+            endGame(false);
+            return;
+          }
           continue;
         }
 
-        if (ob.y > H + 50) obstacles.splice(i, 1);
+        if (ob.y > H + 60) obstacles.splice(i, 1);
       }
 
-      // Move & Collect Energy Cores
-      for (let i = coins.length - 1; i >= 0; i--) {
-        const c = coins[i];
-        c.y += speed;
-        c.pulse += 0.1;
+      // Update Pickups
+      for (let i = pickups.length - 1; i >= 0; i--) {
+        const p = pickups[i];
+        p.y += currentSpeed;
+        p.pulse += 0.1;
 
-        const dist = Math.hypot(c.x - player.x, c.y - player.y);
-        if (dist < player.size + c.radius + 6) {
-          soundCollect();
-          spawnParticle(c.x, c.y, '#00f0ff', 12);
-          score += 100;
-          scoreText.innerText = score;
-          coins.splice(i, 1);
+        const dist = Math.hypot(p.x - player.x, p.y - player.y);
+        if (dist < player.width / 2 + p.radius + 12) {
+          if (p.type === 'shield') {
+            soundShield();
+            shields = Math.min(3, shields + 1);
+            updateShieldUI();
+            addFloatingText(p.x, p.y, '+SHIELD REPAIR', '#06b6d4');
+            spawnExplosion(p.x, p.y, '#06b6d4', 16);
+          } else {
+            soundCollect();
+            score += 150;
+            scoreText.innerText = score;
+            addFloatingText(p.x, p.y, '+150', '#38bdf8');
+            spawnExplosion(p.x, p.y, '#38bdf8', 14);
+          }
+          pickups.splice(i, 1);
           continue;
         }
 
-        if (c.y > H + 50) coins.splice(i, 1);
+        if (p.y > H + 50) pickups.splice(i, 1);
       }
 
-      // Particles
+      // Update Floating Texts
+      for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        const ft = floatingTexts[i];
+        ft.y += ft.dy;
+        ft.alpha -= 0.025;
+        if (ft.alpha <= 0) floatingTexts.splice(i, 1);
+      }
+
+      // Update Particles
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.x += p.vx;
@@ -455,22 +735,30 @@
         if (p.alpha <= 0) particles.splice(i, 1);
       }
 
-      if (shake > 0) shake *= 0.85;
+      if (shake > 0) shake *= 0.88;
     }
 
+    // Render Loop
     function render() {
       ctx.save();
-      if (shake > 0.5) {
+      if (shake > 0.4) {
         ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
       }
 
-      // Clear Canvas
-      ctx.fillStyle = '#060814';
+      // Clear Screen with deep cosmic gradient
+      ctx.fillStyle = '#050814';
       ctx.fillRect(0, 0, W, H);
 
-      // Cyber Grid Perspective
-      ctx.strokeStyle = 'rgba(0, 240, 255, 0.08)';
+      // Deep Horizon Grid lines (Cyber highway feeling)
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.06)';
       ctx.lineWidth = 1;
+      const gridOffset = (frame * (currentSpeed * 0.8)) % 40;
+      for (let y = gridOffset; y < H; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+      }
       for (let x = 0; x < W; x += 40) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
@@ -478,79 +766,221 @@
         ctx.stroke();
       }
 
-      // Stars
-      for (let s of stars) {
-        ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      // Draw Stars (Layered Parallax)
+      starLayers.forEach(layer => {
+        for (let s of layer) {
+          ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
 
-      // Jet Exhaust Trail
+      // Jet Thruster Exhaust Glow & Particles
       for (let i = 0; i < player.trail.length; i++) {
         const t = player.trail[i];
-        ctx.fillStyle = `rgba(0, 240, 255, ${t.alpha * (1 - i / player.trail.length)})`;
+        const rad = Math.max(1, t.w * (1 - i / player.trail.length));
+        ctx.fillStyle = `rgba(56, 189, 248, ${t.alpha * 0.6})`;
         ctx.beginPath();
-        ctx.arc(t.x, t.y + i * 3, 10 - i, 0, Math.PI * 2);
+        ctx.arc(t.x, t.y + i * 4, rad, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // Player Ship (Futuristic Jet)
+      // Draw Starfighter Ship (Custom Handcrafted Vector Design)
       ctx.save();
       ctx.translate(player.x, player.y);
-      // Glow
-      ctx.shadowColor = '#00f0ff';
-      ctx.shadowBlur = 15;
+      ctx.rotate(player.tilt);
 
-      ctx.fillStyle = '#00f0ff';
+      // Dual Jet Afterburner Flames
+      const flameLen = 18 + player.flameFlicker + (currentSpeed > 10 ? 12 : 0);
+      const flameGrad = ctx.createLinearGradient(0, player.height / 2, 0, player.height / 2 + flameLen);
+      flameGrad.addColorStop(0, '#ffffff');
+      flameGrad.addColorStop(0.3, '#38bdf8');
+      flameGrad.addColorStop(1, 'rgba(37, 99, 235, 0)');
+
+      // Left engine flame
+      ctx.fillStyle = flameGrad;
       ctx.beginPath();
-      ctx.moveTo(0, -player.size);
-      ctx.lineTo(player.size, player.size);
-      ctx.lineTo(0, player.size - 8);
-      ctx.lineTo(-player.size, player.size);
+      ctx.moveTo(-10, player.height / 2 - 4);
+      ctx.lineTo(-6, player.height / 2 - 4);
+      ctx.lineTo(-8, player.height / 2 + flameLen);
       ctx.closePath();
       ctx.fill();
 
-      // Cockpit
-      ctx.fillStyle = '#ffffff';
+      // Right engine flame
       ctx.beginPath();
-      ctx.ellipse(0, 0, 4, 10, 0, 0, Math.PI * 2);
+      ctx.moveTo(6, player.height / 2 - 4);
+      ctx.lineTo(10, player.height / 2 - 4);
+      ctx.lineTo(8, player.height / 2 + flameLen);
+      ctx.closePath();
       ctx.fill();
+
+      // Ship Main Hull Gradient
+      const hullGrad = ctx.createLinearGradient(0, -player.height / 2, 0, player.height / 2);
+      hullGrad.addColorStop(0, '#f8fafc');
+      hullGrad.addColorStop(0.4, '#0ea5e9');
+      hullGrad.addColorStop(1, '#0369a1');
+
+      // Main Delta-Wing Body
+      ctx.fillStyle = hullGrad;
+      ctx.beginPath();
+      ctx.moveTo(0, -player.height / 2); // Nose
+      ctx.lineTo(player.width / 2, player.height / 2 - 6); // Right wing tip
+      ctx.lineTo(player.width / 4, player.height / 2); // Right wing inner
+      ctx.lineTo(0, player.height / 2 - 8); // Tail center
+      ctx.lineTo(-player.width / 4, player.height / 2); // Left wing inner
+      ctx.lineTo(-player.width / 2, player.height / 2 - 6); // Left wing tip
+      ctx.closePath();
+      ctx.fill();
+
+      // Ship Edge Trim / Neon Armor Accents
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Wingtip Cannons
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(-player.width / 2, player.height / 4 - 8, 3, 10);
+      ctx.fillRect(player.width / 2 - 3, player.height / 4 - 8, 3, 10);
+
+      // Glass Cockpit
+      const cockpitGrad = ctx.createLinearGradient(0, -12, 0, 6);
+      cockpitGrad.addColorStop(0, '#ffffff');
+      cockpitGrad.addColorStop(0.5, '#38bdf8');
+      cockpitGrad.addColorStop(1, '#0284c7');
+      ctx.fillStyle = cockpitGrad;
+      ctx.beginPath();
+      ctx.ellipse(0, -2, 4.5, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cockpit Glow
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Shield Aura when active or on hit
+      if (shields > 1) {
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, player.width * 0.75, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
       ctx.restore();
 
-      // Obstacles (Cyber Mines / Hazard Bars)
+      // Draw Obstacles (Dread Mines & Energy Barriers)
       for (let ob of obstacles) {
         ctx.save();
         ctx.translate(ob.x, ob.y);
         ctx.rotate(ob.rot);
-        ctx.shadowColor = '#ff0077';
-        ctx.shadowBlur = 15;
-        ctx.fillStyle = '#ff0077';
-        ctx.fillRect(-ob.w / 2, -ob.h / 2, ob.w, ob.h);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-ob.w / 4, -ob.h / 4, ob.w / 2, ob.h / 2);
+
+        if (ob.type === 'mine') {
+          // Dread Space Mine (Spiked Octagon with Glowing Core)
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.arc(0, 0, ob.size * 0.7, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Hazard Spikes
+          ctx.strokeStyle = '#f43f5e';
+          ctx.lineWidth = 2.5;
+          for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(a) * (ob.size * 0.5), Math.sin(a) * (ob.size * 0.5));
+            ctx.lineTo(Math.cos(a) * (ob.size + 4), Math.sin(a) * (ob.size + 4));
+            ctx.stroke();
+          }
+
+          // Pulsing Core
+          const coreRad = 6 + Math.sin(ob.pulse) * 2;
+          ctx.fillStyle = '#f43f5e';
+          ctx.shadowColor = '#f43f5e';
+          ctx.shadowBlur = 12;
+          ctx.beginPath();
+          ctx.arc(0, 0, coreRad, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Quantum Barrier (Dual Pylons with Laser Arc)
+          ctx.strokeStyle = '#f43f5e';
+          ctx.lineWidth = 3;
+          ctx.shadowColor = '#f43f5e';
+          ctx.shadowBlur = 10;
+          ctx.beginPath();
+          ctx.moveTo(-ob.size, 0);
+          ctx.lineTo(ob.size, 0);
+          ctx.stroke();
+
+          // Left/Right Emitters
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(-ob.size - 4, -6, 8, 12);
+          ctx.fillRect(ob.size - 4, -6, 8, 12);
+        }
+
         ctx.restore();
       }
 
-      // Collectible Cores
-      for (let c of coins) {
+      // Draw Pickups (Plasma Energy Core & Shield Repair)
+      for (let p of pickups) {
         ctx.save();
-        ctx.translate(c.x, c.y);
-        ctx.shadowColor = '#00f0ff';
-        ctx.shadowBlur = 18;
-        const scale = 1 + Math.sin(c.pulse) * 0.15;
-        ctx.scale(scale, scale);
+        ctx.translate(p.x, p.y);
+        const pulseScale = 1 + Math.sin(p.pulse) * 0.15;
+        ctx.scale(pulseScale, pulseScale);
 
-        ctx.strokeStyle = '#00f0ff';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(0, 0, c.radius, 0, Math.PI * 2);
-        ctx.stroke();
+        if (p.type === 'shield') {
+          // Shield Hexagon Cell
+          ctx.shadowColor = '#06b6d4';
+          ctx.shadowBlur = 16;
+          ctx.strokeStyle = '#06b6d4';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          for (let i = 0; i < 6; i++) {
+            const ang = (i * Math.PI) / 3;
+            const px = Math.cos(ang) * p.radius;
+            const py = Math.sin(ang) * p.radius;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.stroke();
 
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(0, 0, c.radius / 2.2, 0, Math.PI * 2);
-        ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 12px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('🛡️', 0, 0);
+        } else {
+          // Plasma Diamond Core
+          ctx.shadowColor = '#38bdf8';
+          ctx.shadowBlur = 14;
+          ctx.fillStyle = '#38bdf8';
+          ctx.beginPath();
+          ctx.moveTo(0, -p.radius);
+          ctx.lineTo(p.radius, 0);
+          ctx.lineTo(0, p.radius);
+          ctx.lineTo(-p.radius, 0);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(0, 0, p.radius / 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      // Floating Score / Status Texts
+      for (let ft of floatingTexts) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, ft.alpha);
+        ctx.font = 'bold 13px -apple-system, sans-serif';
+        ctx.fillStyle = ft.color;
+        ctx.textAlign = 'center';
+        ctx.shadowColor = ft.color;
+        ctx.shadowBlur = 8;
+        ctx.fillText(ft.text, ft.x, ft.y);
         ctx.restore();
       }
 
